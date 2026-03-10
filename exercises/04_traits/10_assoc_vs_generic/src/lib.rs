@@ -13,6 +13,44 @@
 // You don't have to though: it's perfectly okay to write three separate
 // implementations manually. Venture further only if you're curious.
 
+
+// create a generic trait with a method power which only takes a reference to &self
+// method signature 'contract'. Like a C header declaration
+// this is like Deref style, it takes a generic <Exponent = Self> and associated Output type
+pub trait Power<E = Self> {
+    // Power::Output is the exclusive type that power returns
+    type Output;
+    // power method takes &self to call .power, and n exponent generic type argument
+    fn power(&self, n: E) -> Self::Output;
+}
+
+// provide custom implementation to convert multple int types to u32 which power will return
+// u16 kind of on its own because it's the most different
+impl Power<u16> for u32 {
+    type Output = u32;
+
+    // expand the u16 impl into u32
+    fn power(&self, n: u16) -> Self::Output {
+        self.pow(n as u32)
+    }
+}
+
+impl Power<u32> for u32 {
+    type Output = u32;
+    fn power(&self, n: u32) -> Self::Output {
+        self.pow(n)
+    }
+}
+
+impl Power<&u32> for u32 {
+    type Output = u32;
+    fn power(&self, n: &u32) -> Self::Output {
+        // if you deref the &u32, it's the same as u32 implementation, reuse
+        self.power(*n)
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::Power;

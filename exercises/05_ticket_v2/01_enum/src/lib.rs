@@ -11,7 +11,9 @@ struct Ticket {
 }
 
 enum Status {
-    // TODO: add the missing variants
+    ToDo,
+    InProgress,
+    Done,
 }
 
 impl Ticket {

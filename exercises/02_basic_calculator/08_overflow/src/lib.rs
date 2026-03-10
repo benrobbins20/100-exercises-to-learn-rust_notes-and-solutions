@@ -25,6 +25,9 @@ mod tests {
         assert_eq!(factorial(20), 2_192_834_560);
         //                           ☝️
         // A large number literal using underscores to improve readability!
+        // 20! ≡ 2_192_834_560 mod 2^32 - equivalent, 20! mod 2^32 is the same
+        // as 2_192_834_560 mod 2^32, produces same result in 32 bit space.
+        // wrapping just rolls over the 32 bit remainder
     }
 
     #[test]

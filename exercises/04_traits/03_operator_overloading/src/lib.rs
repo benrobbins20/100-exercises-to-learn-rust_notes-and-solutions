@@ -6,10 +6,19 @@ struct Ticket {
     status: String,
 }
 
-// TODO: Implement the `PartialEq` trait for `Ticket`.
 
-impl PartialEq for Ticket {}
+// &Self is the keyword for the type thats implementing the trait
+// so this is saying that 
+impl PartialEq for Ticket {
+    fn eq (&self, eq_to: &Self) -> bool {
+        self.title == eq_to.title &&
+        self.description == eq_to.description && 
+        self.status == eq_to.status
+    }
+}
 
+
+// tests may not run in order, they are in nature gathered and then ran in parallel
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -4,8 +4,11 @@
 //  Look at the compiler error to get familiar with what it looks like.
 //  Then delete the code below and move on to the next exercise.
 
-impl PartialEq for u32 {
-    fn eq(&self, _other: &Self) -> bool {
-        todo!()
-    }
-}
+
+// cant implement foreign trait on foreign type
+// u32 should already have partial_eq?
+// impl PartialEq for u32 {
+//     fn eq(&self, _other: &Self) -> bool {
+//         todo!()
+//     }
+// }

@@ -10,13 +10,15 @@ pub struct Ticket {
     status: String,
 }
 
+// 'getters' just return the trimmed value, it does not write the struct field, (but you do fetch it in the tests)
 impl Ticket {
     pub fn title(&self) -> &str {
-        todo!()
+        // since self.title is a String, $self.title is a &String which can be coerced/derefenced into returning a &str
+        self.title.trim()
     }
 
     pub fn description(&self) -> &str {
-        todo!()
+        self.description.trim()
     }
 }
 
@@ -27,6 +29,7 @@ mod tests {
     #[test]
     fn test_normalization() {
         let ticket = Ticket {
+            // convert the normalized str back into String
             title: "   A title ".to_string(),
             description: " A description   ".to_string(),
             status: "To-Do".to_string(),

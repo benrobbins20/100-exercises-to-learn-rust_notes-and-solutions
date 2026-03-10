@@ -6,7 +6,7 @@ mod tests {
 
     #[test]
     fn u16_to_u32() {
-        let v: u32 = todo!();
+        let v: u32 = 47u16 as u32;
         assert_eq!(47u16 as u32, v);
     }
 
@@ -24,14 +24,21 @@ mod tests {
         // You could solve this by using exactly the same expression as above,
         // but that would defeat the purpose of the exercise. Instead, use a genuine
         // `i8` value that is equivalent to `255` when converted to `u8`.
-        let y: i8 = todo!();
+
+        // twos complement representation of 255
+        // 11111111
+        // 00000000 - negate
+        // 00000001 - add 1
+        // so 11111111 has negative value, and two's complement reveals it equals 1
+        // 11111111 = -1
+        let y: i8 = -1;
 
         assert_eq!(x, y);
     }
 
     #[test]
     fn bool_to_u8() {
-        let v: u8 = todo!();
-        assert_eq!(true as u8, v);
+        let v: u8 = 1;
+        assert_eq!(true as u8, v); // true as u8, meaning true equals 1
     }
 }

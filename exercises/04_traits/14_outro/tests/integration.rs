@@ -2,11 +2,11 @@ use outro_03::SaturatingU16;
 
 #[test]
 fn test_saturating_u16() {
-    let a: SaturatingU16 = (&10u8).into();
-    let b: SaturatingU16 = 5u8.into();
-    let c: SaturatingU16 = u16::MAX.into();
-    let d: SaturatingU16 = (&1u16).into();
-    let e = &c;
+    let a: SaturatingU16 = (&10u8).into(); // $u8
+    let b: SaturatingU16 = 5u8.into(); // u8
+    let c: SaturatingU16 = u16::MAX.into(); // u16
+    let d: SaturatingU16 = (&1u16).into(); // $u16
+    let e = &c; 
 
     assert_eq!(a + b, SaturatingU16::from(15u16));
     assert_eq!(a + c, SaturatingU16::from(u16::MAX));

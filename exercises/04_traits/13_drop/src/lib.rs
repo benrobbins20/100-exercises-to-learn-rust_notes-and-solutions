@@ -12,7 +12,6 @@ impl DropBomb {
     pub fn defuse(&mut self) {
         self.defused = true;
     }
-
 }
 
 // basically the lesson here is that you must consider other held references, memory, or other conditions before dropping

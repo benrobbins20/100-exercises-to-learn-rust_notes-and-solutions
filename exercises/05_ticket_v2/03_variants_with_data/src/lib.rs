@@ -37,8 +37,13 @@ impl Ticket {
             status,
         }
     }
+    
     pub fn assigned_to(&self) -> &str {
-        todo!()
+        match &self.status {
+            Status::InProgress { assigned_to: person } => person.as_str(),
+            Status::Done | Status::ToDo => panic!("Only `In-Progress` tickets can be assigned to someone"),
+
+        }
     }
 }
 
@@ -51,9 +56,9 @@ mod tests {
     #[should_panic(expected = "Only `In-Progress` tickets can be assigned to someone")]
     fn test_todo() {
         let ticket = Ticket::new(valid_title(), valid_description(), Status::ToDo);
-        ticket.assigned_to();
+        ticket.assigned_to(); // function panics with enums todo and done
     }
-
+    
     #[test]
     #[should_panic(expected = "Only `In-Progress` tickets can be assigned to someone")]
     fn test_done() {

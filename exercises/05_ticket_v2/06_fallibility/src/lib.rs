@@ -1,6 +1,9 @@
 // TODO: Convert the `Ticket::new` method to return a `Result` instead of panicking.
 //   Use `String` as the error type.
 
+
+
+
 #[derive(Debug, PartialEq)]
 struct Ticket {
     title: String,
@@ -16,25 +19,35 @@ enum Status {
 }
 
 impl Ticket {
-    pub fn new(title: String, description: String, status: Status) -> Ticket {
+    pub fn new(title: String, description: String, status: Status) -> Result<Ticket, String> {
         if title.is_empty() {
-            panic!("Title cannot be empty");
+            // manually construct the Result enum and allow return type to infer the Ok(Ticket) part
+            let err: Result<Ticket,String> = Result::Err(String::from("Title cannot be empty"));
+            dbg!(&err); // only Err is populated, so debug prints that variant+string
+            return err;
         }
+        
         if title.len() > 50 {
-            panic!("Title cannot be longer than 50 bytes");
-        }
-        if description.is_empty() {
-            panic!("Description cannot be empty");
-        }
-        if description.len() > 500 {
-            panic!("Description cannot be longer than 500 bytes");
+            // Result<_,&str> which doesnt match return so it cant infer Ticket
+            let e = Err("Title cannot be longer than 50 bytes");
+            // once the str is converted to Err(String), inference can work
+            let e = e.map_err(|x| x.into());
+            return e;
         }
 
-        Ticket {
+        // jump right to the Err enum and use str conversion
+        if description.is_empty() {
+            return Err("Description cannot be empty".to_string()); // same same, String::from(str)
+        }
+        if description.len() > 500 {
+            return Err("Description cannot be longer than 500 bytes".into());
+        }
+
+        Ok(Ticket {
             title,
             description,
             status,
-        }
+        })
     }
 }
 

@@ -955,24 +955,26 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'fallibility'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=fallibility"
-                ],
-                "filter": {
-                    "name": "fallibility",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
+    "type": "lldb",
+    "request": "launch",
+    "name": "Debug unit tests in library 'fallibility'",
+    "cargo": {
+        "args": [
+            "test",
+            "--no-run",
+            "--lib",
+            "--package=fallibility"
+        ],
+        "filter": {
+            "name": "fallibility",
+            "kind": "lib"
+        }
+    },
+    "initCommands": [
+        "settings set target.process.thread.step-avoid-regexp ''",
+        "settings set target.max-children-count 0"
+    ]
+},
         {
             "type": "lldb",
             "request": "launch",

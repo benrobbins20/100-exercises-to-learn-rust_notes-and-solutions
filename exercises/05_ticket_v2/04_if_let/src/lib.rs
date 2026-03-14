@@ -1,3 +1,4 @@
+#[derive(Debug)]
 enum Shape {
     Circle { radius: f64 },
     Square { border: f64 },
@@ -5,13 +6,16 @@ enum Shape {
 }
 
 impl Shape {
-    // TODO: Implement the `radius` method using
-    //  either an `if let` or a `let/else`.
     pub fn radius(&self) -> f64 {
-        todo!()
+
+        // if it resolves to a circle enum REF, popluate self {radius: r} 
+        if let &Shape::Circle { radius: r } = self {r}
+        else {
+            println!("{:?}", self); // print the enum Debug with its data 
+            panic!("Wrong type")
+        }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;

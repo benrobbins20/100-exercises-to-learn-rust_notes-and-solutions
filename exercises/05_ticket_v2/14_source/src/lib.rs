@@ -1,19 +1,32 @@
-use crate::status::Status;
-
-// We've seen how to declare modules in one of the earliest exercises, but
-// we haven't seen how to extract them into separate files.
-// Let's fix that now!
-//
-// In the simplest case, when the extracted module is a single file, it is enough to
-// create a new file with the same name as the module and move the module content there.
-// The module file should be placed in the same directory as the file that declares the module.
-// In this case, `src/lib.rs`, thus `status.rs` should be placed in the `src` directory.
+use crate::status::{ParseStatusError, Status};
 mod status;
 
-// TODO: Add a new error variant to `TicketNewError` for when the status string is invalid.
-//   When calling `source` on an error of that variant, it should return a `ParseStatusError` rather than `None`.
+/* This way is a lot easier */
+// #[derive(Debug, thiserror::Error)]
+// pub enum TicketNewError {
+//     #[error("Title cannot be empty")]
+//     TitleCannotBeEmpty,
+//     #[error("Title cannot be longer than 50 bytes")]
+//     TitleTooLong,
+//     #[error("Description cannot be empty")]
+//     DescriptionCannotBeEmpty,
+//     #[error("Description cannot be longer than 500 bytes")]
+//     DescriptionTooLong,
+//     // This essentially adds ParseStatusError to TicketNewError, and allows error propagation to Ticket things
+//     #[error("{0}")]
+//     InvalidStatusEnum(#[from] ParseStatusError) // THIS is the tuple, the {0} item is the ParseStatusError Struct
+// }
 
-#[derive(Debug, thiserror::Error)]
+impl From<ParseStatusError> for TicketNewError {
+    fn from(value: ParseStatusError) -> Self {
+        TicketNewError::InvalidStatusEnum { 
+            invalid_status_cp: value.invalid_status.clone(), // must declare the struct field as pub
+            source: value }
+    }
+}
+
+/* ALTERNATIVE USING STRUCT UNPACKING (it kind of redundant because its mirroring struct already in status.rs*/
+#[derive(Debug,thiserror::Error)]
 pub enum TicketNewError {
     #[error("Title cannot be empty")]
     TitleCannotBeEmpty,
@@ -23,6 +36,12 @@ pub enum TicketNewError {
     DescriptionCannotBeEmpty,
     #[error("Description cannot be longer than 500 bytes")]
     DescriptionTooLong,
+    #[error("`{invalid_status_cp}` is not a valid status. Use one of: ToDo, InProgress, Done")]
+    InvalidStatusEnum{
+        invalid_status_cp: String,
+        #[source]
+        source: ParseStatusError
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -47,7 +66,9 @@ impl Ticket {
             return Err(TicketNewError::DescriptionTooLong);
         }
 
-        // TODO: Parse the status string into a `Status` enum.
+        // use the try_from impls to convert the status string to enum
+        // must have statuses error included in TicketNewError for propagation
+        let status = Status::try_from(status)?;
 
         Ok(Ticket {
             title,
@@ -66,10 +87,10 @@ mod tests {
 
     #[test]
     fn invalid_status() {
-        let err = Ticket::new(valid_title(), valid_description(), "invalid".into()).unwrap_err();
+        let err = Ticket::new(valid_title(), valid_description(), "bitchass".into()).unwrap_err();
         assert_eq!(
             err.to_string(),
-            "`invalid` is not a valid status. Use one of: ToDo, InProgress, Done"
+            "`bitchass` is not a valid status. Use one of: ToDo, InProgress, Done"
         );
         assert!(err.source().is_some());
     }

@@ -1,21 +1,27 @@
-// Given a number `n`, return the `n+1`th number in the Fibonacci sequence.
-//
-// The Fibonacci sequence is defined as follows:
-//
-// - The first number of the sequence is 0.
-// - The second number of the sequence is 1.
-// - Every subsequent number is the sum of the two preceding numbers.
-//
-// So the sequence goes: 0, 1, 1, 2, 3, 5, 8, 13, 21, and so on.
-//
-// We expect `fibonacci(0)` to return `0`, `fibonacci(1)` to return `1`,
-// `fibonacci(2)` to return `1`, and so on.
+fn fill_vec(n: usize) -> Vec<u32>{
+    let mut v: Vec<u32> = Vec::new();
+    v.push(0);
+    v.push(1);
+
+    for i in 2..=n {
+        v.push(v[i-1]+v[i-2])
+    }
+
+    v
+}
+
 pub fn fibonacci(n: u32) -> u32 {
-    // TODO: implement the `fibonacci` function
-    //
-    // Hint: use a `Vec` to memoize the results you have already calculated
-    // so that you don't have to recalculate them several times.
-    todo!()
+    match n {
+        // handle base cases
+        0 => 0,
+        1 => 1,
+
+        // anything else, fill the vector with n fibs and return the last
+        _ => {
+            let v = fill_vec(n as usize);
+            *v.last().unwrap()
+        }
+    }
 }
 
 #[cfg(test)]

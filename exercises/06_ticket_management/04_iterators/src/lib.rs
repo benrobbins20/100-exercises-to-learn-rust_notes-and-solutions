@@ -1,16 +1,22 @@
+use std::vec::IntoIter;
 use ticket_fields::{TicketDescription, TicketTitle};
 
-// TODO: Let's start sketching our ticket store!
-//  First task: implement `IntoIterator` on `TicketStore` to allow iterating over all the tickets
-//  it contains using a `for` loop.
-//
-// Hint: you shouldn't have to implement the `Iterator` trait in this case.
-//   You want to *delegate* the iteration to the `Vec<Ticket>` field in `TicketStore`.
-//   Look at the standard library documentation for `Vec` to find the right type
-//   to return from `into_iter`.
 #[derive(Clone)]
 pub struct TicketStore {
     tickets: Vec<Ticket>,
+}
+
+impl IntoIterator for TicketStore {
+    type Item = Ticket;
+    type IntoIter = IntoIter<Self::Item>;
+    
+    // vec already has into_iter, so just use self.<vector>.into_iter
+    // TicketStore struct now has looping ability
+    // this is a consumtion method, TicketStore{vec} is destroyed and tickets vector is extracted
+    // it does not borrow a pointer the the heap location for this
+    fn into_iter(self) -> Self::IntoIter {
+        self.tickets.into_iter()
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

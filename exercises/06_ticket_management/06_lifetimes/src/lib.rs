@@ -1,10 +1,23 @@
+use std::slice::Iter;
+
 use ticket_fields::{TicketDescription, TicketTitle};
 
-// TODO: Implement the `IntoIterator` trait for `&TicketStore` so that the test compiles and passes.
 #[derive(Clone)]
 pub struct TicketStore {
     tickets: Vec<Ticket>,
 }
+
+// already did this in last exercise, just copied over
+// must use named lifetime because it can't infer between lifetimes (not sure why)
+impl<'a> IntoIterator for &'a TicketStore {
+    type Item = &'a Ticket;
+    type IntoIter = Iter<'a,Ticket>;
+    
+    // since TicketStore is ref, iter() just works out of the box
+    fn into_iter(self) -> Self::IntoIter {
+        self.tickets.iter()
+    }
+} 
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Ticket {
@@ -31,7 +44,8 @@ impl TicketStore {
         self.tickets.push(ticket);
     }
 
-    pub fn iter(&self) -> std::slice::Iter<Ticket> {
+    // elided lifetime, by inference, Self::tickets iter references live as long as the store instance
+    pub fn iter(&self) -> std::slice::Iter<'_,Ticket> {
         self.tickets.iter()
     }
 }

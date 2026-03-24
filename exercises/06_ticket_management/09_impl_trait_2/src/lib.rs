@@ -29,11 +29,10 @@ impl TicketStore {
         }
     }
 
-    // Using `Into<Ticket>` as the type parameter for `ticket` allows the method to accept any type
-    // that can be infallibly converted into a `Ticket`.
-    // This can make it nicer to use the method, as it removes the syntax noise of `.into()`
-    // from the calling site. It can worsen the quality of the compiler error messages, though.
-    pub fn add_ticket(&mut self, ticket: impl Into<Ticket>) {
+    // method that takes generic/ambiguous type
+    // the type must be convertable Into<Ticket> 
+    // eg impl From<TicketDraft> for Ticket in tests
+    pub fn add_ticket<T: Into<Ticket>> (&mut self, ticket: T) {
         self.tickets.push(ticket.into());
     }
 }
@@ -61,8 +60,8 @@ mod tests {
     #[test]
     fn generic_add() {
         let mut store = TicketStore::new();
-        // This won't compile if `add_ticket` uses `impl Trait` syntax in argument position.
-        store.add_ticket::<TicketDraft>(TicketDraft {
+        // turbofish (add_ticket::<Draft>) helps this be explicit but not neccessary
+        store.add_ticket::<> (TicketDraft {
             title: ticket_title(),
             description: ticket_description(),
         });

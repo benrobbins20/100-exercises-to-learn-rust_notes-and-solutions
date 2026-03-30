@@ -4,9 +4,14 @@
         "plaintext": false,
         "markdown": false,
         "scminput": false,
-        "rust": false,
+        "rust": true,
         "python": true,
         "c": true,
         "cpp": true
-    }
+    },
+    "workbench.editorAssociations": {
+        "*.md": "vscode.markdown.preview.editor"
+    },
+    "workbench.editor.enablePreview": false,
+    "workbench.editor.enablePreviewFromQuickOpen": false
 }

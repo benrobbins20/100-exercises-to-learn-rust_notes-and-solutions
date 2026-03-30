@@ -1,11 +1,13 @@
 // TODO: Implement `Index<&TicketId>` and `Index<TicketId>` for `TicketStore`.
 
+use std::ops::Index;
+
 use ticket_fields::{TicketDescription, TicketTitle};
 
 #[derive(Clone)]
 pub struct TicketStore {
     tickets: Vec<Ticket>,
-    counter: u64,
+    next_id: u64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -36,13 +38,17 @@ impl TicketStore {
     pub fn new() -> Self {
         Self {
             tickets: Vec::new(),
-            counter: 0,
+            next_id: 0,
         }
     }
 
     pub fn add_ticket(&mut self, ticket: TicketDraft) -> TicketId {
-        let id = TicketId(self.counter);
-        self.counter += 1;
+
+        // get next id, init 0 in new()
+        let id = TicketId(self.next_id);
+        self.next_id += 1;
+
+
         let ticket = Ticket {
             id,
             title: ticket.title,
@@ -50,6 +56,7 @@ impl TicketStore {
             status: Status::ToDo,
         };
         self.tickets.push(ticket);
+
         id
     }
 
@@ -58,9 +65,28 @@ impl TicketStore {
     }
 }
 
+// tie the Index trait to ticketid and translate to ticket in store 
+impl Index<TicketId> for TicketStore {
+    type Output = Ticket;
+
+    fn index(&self, index: TicketId) -> &Self::Output {
+        self.get(index).unwrap()
+    }
+}
+
+
+impl Index<&TicketId> for TicketStore {
+    type Output = Ticket;
+
+    fn index(&self, index: &TicketId) -> &Self::Output {
+        // return store[idx: TicketId], which is handled above 
+        &self[*index]
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{Status, TicketDraft, TicketStore};
+    use crate::{Status, Ticket, TicketDraft, TicketStore};
     use ticket_fields::test_helpers::{ticket_description, ticket_title};
 
     #[test]
@@ -82,7 +108,8 @@ mod tests {
             description: ticket_description(),
         };
         let id2 = store.add_ticket(draft2);
-        let ticket2 = &store[&id2];
+        // &TicketId
+        let _ticket2: &Ticket = &store[&id2];
 
         assert_ne!(id1, id2);
     }

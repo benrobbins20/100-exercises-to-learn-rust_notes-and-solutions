@@ -1,6 +1,3 @@
-// TODO: Replace `todo!()`s with the correct implementation.
-//  Implement additional traits on `TicketId` if needed.
-
 use std::collections::HashMap;
 use std::ops::{Index, IndexMut};
 use ticket_fields::{TicketDescription, TicketTitle};
@@ -11,7 +8,8 @@ pub struct TicketStore {
     counter: u64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+// the id is hashable, not Ticket which would be Value
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct TicketId(u64);
 
 #[derive(Clone, Debug, PartialEq)]
@@ -38,7 +36,7 @@ pub enum Status {
 impl TicketStore {
     pub fn new() -> Self {
         Self {
-            tickets: todo!(),
+            tickets: HashMap::new(),
             counter: 0,
         }
     }
@@ -52,16 +50,17 @@ impl TicketStore {
             description: ticket.description,
             status: Status::ToDo,
         };
-        todo!();
+        self.tickets.insert(id, ticket);
+
         id
     }
 
     pub fn get(&self, id: TicketId) -> Option<&Ticket> {
-        todo!()
+        self.tickets.get(&id)
     }
 
     pub fn get_mut(&mut self, id: TicketId) -> Option<&mut Ticket> {
-        todo!()
+        self.tickets.get_mut(&id)
     }
 }
 
@@ -95,7 +94,10 @@ impl IndexMut<&TicketId> for TicketStore {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Status, TicketDraft, TicketStore};
+    use std::hash::Hash;
+    use std::hash::Hasher;
+
+    use crate::{Status, TicketDraft, TicketId, TicketStore, Ticket};
     use ticket_fields::test_helpers::{ticket_description, ticket_title};
 
     #[test]
@@ -107,6 +109,7 @@ mod tests {
             description: ticket_description(),
         };
         let id = store.add_ticket(draft.clone());
+        println!("ID: {:?}", id);
         let ticket = &store[id];
         assert_eq!(draft.title, ticket.title);
         assert_eq!(draft.description, ticket.description);
@@ -117,5 +120,27 @@ mod tests {
 
         let ticket = &store[id];
         assert_eq!(ticket.status, Status::InProgress);
+    }
+
+    #[test]
+    fn check_hash() {
+        let mut store = TicketStore::new();
+
+        let id = TicketId(42);
+
+        let ticket = Ticket {
+            id: id,
+            title: ticket_title(),
+            description: ticket_description(),
+            status: Status::ToDo,
+        };
+
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        id.hash(&mut hasher);
+        println!("Hash of {:?} is {:x}", id, hasher.finish());
+
+        store.tickets.insert(id.clone(), ticket);
+        let t = store.get(id);
+        println!("Retrieved ticket: {:?}", t);
     }
 }

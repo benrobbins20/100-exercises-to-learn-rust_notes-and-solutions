@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 use std::ops::{Index, IndexMut};
 use ticket_fields::{TicketDescription, TicketTitle};
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct TicketStore {
     tickets: BTreeMap<TicketId, Ticket>,
     counter: u64,
@@ -37,6 +37,7 @@ pub enum Status {
     Done,
 }
 
+// lifetime references for btree iteration
 impl<'a> IntoIterator for &'a TicketStore {
     type Item = &'a Ticket;
     type IntoIter = std::collections::btree_map::Values<'a, TicketId, Ticket>;
@@ -49,7 +50,7 @@ impl<'a> IntoIterator for &'a TicketStore {
 impl TicketStore {
     pub fn new() -> Self {
         Self {
-            tickets: todo!(),
+            tickets: BTreeMap::new(),
             counter: 0,
         }
     }
@@ -63,16 +64,28 @@ impl TicketStore {
             description: ticket.description,
             status: Status::ToDo,
         };
-        todo!();
+        self.tickets.insert(id, ticket);
+
         id
     }
 
+    // add ticket with manual ID
+    pub fn add_ticket_with_id(&mut self, draft: TicketDraft, id: TicketId) {
+        let ticket = Ticket {
+            id: id,
+            title: draft.title,
+            description: draft.description,
+            status: Status::ToDo,
+        };
+        self.tickets.insert(id, ticket);
+    }
+
     pub fn get(&self, id: TicketId) -> Option<&Ticket> {
-        todo!()
+        self.tickets.get(&id)
     }
 
     pub fn get_mut(&mut self, id: TicketId) -> Option<&mut Ticket> {
-        todo!()
+        self.tickets.get_mut(&id)
     }
 }
 
@@ -108,6 +121,10 @@ impl IndexMut<&TicketId> for TicketStore {
 mod tests {
     use crate::{Status, TicketDraft, TicketId, TicketStore};
     use ticket_fields::test_helpers::{ticket_description, ticket_title};
+    use rand::prelude::SliceRandom;
+    use rand::rng;
+
+    // maybe a function to place ticket in lowest spot with random ordering
 
     #[test]
     fn works() {
@@ -115,11 +132,13 @@ mod tests {
 
         let n_tickets = 5;
 
-        for i in 0..n_tickets {
+        // insert in reverse order, should default to sorted
+        for i in (0..n_tickets).rev() {
             let draft = TicketDraft {
                 title: ticket_title(),
                 description: ticket_description(),
             };
+            let id = TicketId(i);
             let id = store.add_ticket(draft.clone());
             let ticket = &store[id];
             assert_eq!(draft.title, ticket.title);
@@ -131,9 +150,44 @@ mod tests {
 
             let ticket = &store[id];
             assert_eq!(ticket.status, Status::InProgress);
+
+            println!("{:?}",&store)
         }
 
         let ids: Vec<TicketId> = (&store).into_iter().map(|t| t.id).collect();
+        println!("{:?}",ids);
+        let sorted_ids = {
+            let mut v = ids.clone();
+            v.sort();
+            v
+        };
+        assert_eq!(ids, sorted_ids);
+    }
+
+    #[test]
+    fn manual_id_random() {
+        let mut store = TicketStore::new();
+        let n_tickets = 5;
+        let mut v: Vec<_> = (0..n_tickets).map(TicketId).collect();
+        v.shuffle(&mut rng());
+        
+        for id in v {
+            let draft = TicketDraft {
+                title: ticket_title(),
+                description: ticket_description(),
+            };
+
+            store.add_ticket_with_id(draft.clone(), id);
+            let t = &store[id];
+            let t_id = t.id;
+            println!("{:?}", t_id);
+        }
+
+        // prints in order because inserts key,val in order
+        // into_iter returns the ticket 'Values', map ticket to id into a vector 
+        // implicit type works?
+        let ids: Vec<_> = (&store).into_iter().map(|t| t.id).collect();
+        println!("{:?}",ids);
         let sorted_ids = {
             let mut v = ids.clone();
             v.sort();

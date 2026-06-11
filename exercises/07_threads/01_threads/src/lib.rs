@@ -12,10 +12,53 @@
 // slices of the vector directly. You'll need to allocate new
 // vectors for each half of the original vector. We'll see why
 // this is necessary in the next exercise.
-use std::thread;
+use std::thread::{self, JoinHandle};
 
 pub fn sum(v: Vec<i32>) -> i32 {
-    todo!()
+    let vc = v.clone();
+    let left_half: Vec<_> = vc[..(vc.len()/2)].to_vec();
+    let right_half: Vec<_> = vc[(vc.len()/2)..].to_vec();
+
+    let l_len: i32 = left_half.len().try_into().unwrap();
+    let r_len: i32  = right_half.len().try_into().unwrap();
+    
+    let left_thread: JoinHandle<i32> = thread::spawn(move ||  {
+        left_half.iter().sum()
+    });
+
+    let right_thread:JoinHandle<i32> = thread::spawn(move || {
+        right_half.iter().sum()
+    });
+
+    // unpack JoinHandle<i32>
+    let left: i32 = left_thread.join().unwrap();
+    let right: i32 = right_thread.join().unwrap();
+    
+    left+right
+}
+
+pub fn sum_rusty(v: Vec<i32>) -> i32 {
+    // rust magic. 
+    // i refuse to say sugar-ing its annoying
+    let mid = v.len() / 2;
+    let (v1,v2) = v.split_at(mid); // split into slices
+    let v1 = v1.to_vec();
+    let v2 = v2.to_vec();
+
+
+    let left_thread: JoinHandle<i32> = thread::spawn(move ||  {
+        v1.iter().sum()
+    });
+
+    let right_thread:JoinHandle<i32> = thread::spawn(move || {
+        v.iter().sum()
+    });
+
+    // unpack JoinHandle<i32>
+    let left: i32 = left_thread.join().unwrap();
+    let right: i32 = right_thread.join().unwrap();
+    
+    left+right
 }
 
 #[cfg(test)]
@@ -45,5 +88,17 @@ mod tests {
     #[test]
     fn ten() {
         assert_eq!(sum(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 55);
+    }
+
+    #[test]
+    fn test_sum() {
+        let v: Vec<_> = vec!(1,2,3,4,54,23,235,235,34,6523,624,356);
+        sum(v);
+    }
+
+     #[test]
+    fn test_sum_rusty() {
+        let v: Vec<_> = vec!(1,2,3,4,54,23,235,235,34,6523,624,356);
+        sum_rusty(v);
     }
 }

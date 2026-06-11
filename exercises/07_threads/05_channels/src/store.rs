@@ -30,4 +30,10 @@ impl TicketStore {
         self.tickets.insert(id, ticket);
         id
     }
+
+    pub fn print_tickets(&self) {
+        for ticket in self.tickets.values() {
+            println!("{:?}", ticket);
+        }
+    }
 }

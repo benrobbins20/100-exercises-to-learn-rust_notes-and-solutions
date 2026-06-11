@@ -21,3 +21,10 @@ pub enum Status {
     InProgress,
     Done,
 }
+
+pub fn ticket_draft() -> TicketDraft {
+    TicketDraft {
+        title: ticket_fields::test_helpers::ticket_title(),
+        description: ticket_fields::test_helpers::ticket_description(),
+    }
+}

@@ -124,8 +124,6 @@ mod tests {
     use rand::prelude::SliceRandom;
     use rand::rng;
 
-    // maybe a function to place ticket in lowest spot with random ordering
-
     #[test]
     fn works() {
         let mut store = TicketStore::new();

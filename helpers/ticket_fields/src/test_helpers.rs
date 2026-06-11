@@ -12,3 +12,4 @@ pub fn ticket_title() -> TicketTitle {
 pub fn ticket_description() -> TicketDescription {
     valid_description().try_into().unwrap()
 }
+

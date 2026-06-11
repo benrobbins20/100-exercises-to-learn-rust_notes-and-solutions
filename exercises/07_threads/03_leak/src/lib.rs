@@ -3,10 +3,23 @@
 //  sum each half in a separate thread.
 //  Hint: check out `Vec::leak`.
 
-use std::thread;
+use std::{thread, vec};
 
 pub fn sum(v: Vec<i32>) -> i32 {
-    todo!()
+    // alloc the whole vec into heap first
+    let v = Box::new(v);
+    let v: &'static mut Vec<i32> = Box::leak(v);
+
+    // or just do leak on Vec
+    // let v = v.leak();
+
+    let mid = v.len()/2;
+    let (a,b) = v.split_at(mid);
+
+    // moves are now operating on &'static slices 
+    let t1 = thread::spawn(move ||{ a.iter().sum::<i32>() });
+    let t2 = thread::spawn(move ||{ b.iter().sum::<i32>() });
+    t1.join().unwrap()+t2.join().unwrap() 
 }
 
 #[cfg(test)]

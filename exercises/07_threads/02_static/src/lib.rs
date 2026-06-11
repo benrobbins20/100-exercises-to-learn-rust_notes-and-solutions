@@ -4,7 +4,19 @@
 use std::thread;
 
 pub fn sum(slice: &'static [i32]) -> i32 {
-    todo!()
+    let mid = slice.len()/2;
+    let (a,b) = slice.split_at(mid);
+
+    // do not need to pack into a Vec like Vec.split, just operate on 'static ref slice
+    let t1 = thread::spawn(move ||{
+        a.iter().sum::<i32>()
+    });
+    let t2 = thread::spawn(move ||{
+        b.iter().sum::<i32>()
+    });
+
+    // Unpack JoinHandle<i32> and sum the results from both threads
+    t1.join().unwrap()+t2.join().unwrap()
 }
 
 #[cfg(test)]

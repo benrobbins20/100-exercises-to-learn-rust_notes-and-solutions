@@ -8,6 +8,8 @@ use ticket_fields::test_helpers::{ticket_description, ticket_title};
 #[test]
 fn insert_works() {
     let sender = launch();
+
+    // basically a new set of sender receiver to test the on ack after 
     let (sender_a, receiver_a) = std::sync::mpsc::channel();
 
     let draft = TicketDraft {
@@ -33,6 +35,7 @@ fn insert_works() {
         id: ticket_id,
         response_sender,
     };
+
     sender
         .send(command)
         .expect("Did you actually spawn a thread? The channel is closed!");
@@ -41,7 +44,7 @@ fn insert_works() {
         .recv()
         .expect("No response received!")
         .unwrap();
-    
+
     // test insert
     assert_eq!(ticket_id, ticket.id);
 

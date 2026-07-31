@@ -1,8 +1,39 @@
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError, sync_channel};
 
-// TODO: Implement the patching functionality.
 use crate::data::{Ticket, TicketDraft, TicketPatch};
 use crate::store::{TicketId, TicketStore};
+
+// custom update error for optimistic concurrency/version mismatch
+#[derive(Debug, PartialEq, thiserror::Error)]
+pub enum UpdateError {
+    #[error("Ticket not found")]
+    NotFound,
+    #[error("Version conflict: expected {expected}, but found {actual}")]
+    VersionConflict {
+        expected: u64,
+        actual: u64,
+    }
+}
+
+//combine the errors into a single error type using thiserror transparent feature
+#[derive(Debug, thiserror::Error, PartialEq)]
+pub enum ClientError {
+    #[error("The store is overloaded")]
+    Overloaded(#[from] OverloadedError),
+
+    #[error(transparent)]
+    Update(#[from] UpdateError)
+}
+
+#[derive(Debug, thiserror::Error, PartialEq)]
+#[error("The store is overloaded")]
+pub struct OverloadedError;
+
+impl From<TrySendError<Command>> for OverloadedError {
+    fn from(_: TrySendError<Command>) -> Self {
+        OverloadedError
+    }
+}
 
 pub mod data;
 pub mod store;
@@ -13,45 +44,40 @@ pub struct TicketStoreClient {
 }
 
 impl TicketStoreClient {
-    pub fn insert(&self, draft: TicketDraft) -> Result<TicketId, OverloadedError> {
+    pub fn insert(&self, draft: TicketDraft) -> Result<TicketId, ClientError> {
         let (response_sender, response_receiver) = sync_channel(1);
         self.sender
             .try_send(Command::Insert {
                 draft,
                 response_channel: response_sender,
-            })?;
+            }).map_err(OverloadedError::from)?;
+
         Ok(response_receiver.recv().unwrap())
     }
 
-    pub fn get(&self, id: TicketId) -> Result<Option<Ticket>, OverloadedError> {
+    pub fn get(&self, id: TicketId) -> Result<Option<Ticket>, ClientError> {
         let (response_sender, response_receiver) = sync_channel(1);
         self.sender
             .try_send(Command::Get {
                 id,
                 response_channel: response_sender,
-            })?;
+            }).map_err(OverloadedError::from)?;
 
         Ok(response_receiver.recv().unwrap())
     }
 
-    pub fn update(&self, ticket_patch: TicketPatch) -> Result<(), OverloadedError> {
+    pub fn update(&self, ticket_patch: TicketPatch) -> Result<(), ClientError> {
         let (response_sender, response_receiver) = sync_channel(1);
+
         self.sender
             .try_send(
-                Command::Update { patch: ticket_patch, response_channel: response_sender }
-            )?;
+                Command::Update { 
+                    patch: ticket_patch, 
+                    response_channel: response_sender 
+                }).map_err(OverloadedError::from)?;
+        
 
-        Ok(response_receiver.recv().unwrap())
-    }
-}
-
-#[derive(Debug, thiserror::Error)]
-#[error("The store is overloaded")]
-pub struct OverloadedError;
-
-impl From<TrySendError<Command>> for OverloadedError {
-    fn from(_: TrySendError<Command>) -> Self {
-        OverloadedError
+        Ok(response_receiver.recv().unwrap()?)
     }
 }
 
@@ -72,7 +98,7 @@ enum Command {
     },
     Update {
         patch: TicketPatch,
-        response_channel: SyncSender<()>,
+        response_channel: SyncSender<Result<(), UpdateError>>, // either just Ok or try to propagate UpdateError
     },
 }
 
@@ -98,19 +124,36 @@ fn server(receiver: Receiver<Command>) {
                 patch,
                 response_channel,
             }) => {
-                if let Some(ticket) = store.get_mut(patch.id) {
-                    if let Some(title) = patch.title{
+                let result = match store.get_mut(patch.id) {
+                    None => Err(UpdateError::NotFound),
+                    
+                    // capture the ticket result and check for version mismatch
+                    Some(ticket) if ticket.version != patch.expected_version => {
+                        Err(UpdateError::VersionConflict { 
+                            expected: patch.expected_version, 
+                            actual: ticket.version })
+                    },
+
+                    // capture ticket and proceed with update if no version mismatch
+                    Some(ticket) => {
+                        if let Some(title) = patch.title{
                         ticket.title = title;
                     }
-                    if let Some(description) = patch.description {
-                        ticket.description = description;
+                        if let Some(description) = patch.description {
+                            ticket.description = description;
+                        }
+                        if let Some(status) = patch.status {
+                            ticket.status = status;
+                        }
+                        ticket.version += 1;
+
+                        Ok(())
                     }
-                    if let Some(status) = patch.status {
-                        ticket.status = status;
-                    }
-                }
-                let _ = response_channel.send(());
+                };
+                let _ = response_channel.send(result);
             }
+
+            // receiver.recv() returns general error when channel closes, capture nothing from the error
             Err(_) => {
                 // There are no more senders, so we can safely break
                 // and shut down the server.
